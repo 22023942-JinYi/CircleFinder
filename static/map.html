@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+
+    <script>
+        L_NO_TOUCH = false;
+        L_DISABLE_3D = false;
+    </script>
+
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+
+    <style>
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            left: 0;
+        }
+    </style>
+
+    <!--Link to get the latest version of the script:
+        https://leafletjs.com/download.html -->
+
+    <!--LATEST VERSION-->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css" rel="stylesheet">
+    <!--LATEST VERSION-->
+
+    <script src="https://cdn.jsdelivr.net/npm/folium@0.14.0/dist/folium.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-linked-pan@1.7.0/dist/leaflet-linked-pan.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css" />
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css" />
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css" />
+
+    <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <style>
+        #map_9a5fe2b4c0a85f46e0a2eaef8761d87c {
+            position: relative;
+            width: 100.0%;
+            height: 100.0%;
+            left: 0.0%;
+            top: 0.0%;
+        }
+
+        .leaflet-container {
+            font-size: 1rem;
+        }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.2/leaflet.draw.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.2/leaflet.draw.css" />
+
+</head>
+
+<body>
+    <div class="folium-map" id="map_9a5fe2b4c0a85f46e0a2eaef8761d87c"></div>
+    <!--This is to remove the white lines and make it clearer in the map-->
+    <style>.leaflet-container img.leaflet-tile {
+        mix-blend-mode: normal;
+        width: 256px !important;
+        height: 256px !important;
+    }</style>
+</body>
+<script>
+    localStorage.clear();
+
+    var map_9a5fe2b4c0a85f46e0a2eaef8761d87c = L.map( //zoom into Singapore
+        "map_9a5fe2b4c0a85f46e0a2eaef8761d87c",
+        {
+            center: [1.3521, 103.8198],
+            crs: L.CRS.EPSG3857,
+            maxBounds: [[-90, -180], [90, 180]],
+            zoom: 12,
+            zoomControl: true,
+            preferCanvas: false,
+        }
+    );
+    L.control.scale().addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+
+
+
+
+
+    var tile_layer_ebed1258e7c600933f69e00defaeaf44 = L.tileLayer(
+        "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        { "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors", 'tileSize': 256, "detectRetina": false, "maxNativeZoom": 19, "maxZoom": 19, "minZoom": 0, "noWrap": false, "opacity": 1, "subdomains": "abc", "tms": false }
+    );
+
+
+    tile_layer_ebed1258e7c600933f69e00defaeaf44.addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+
+    var options = {
+        position: "topleft",
+        draw: {
+            polygon: true,
+            polyline: false,
+            rectangle: true,
+            circle: true,
+            marker: false,
+            circlemarker: false
+        },
+        edit: {},
+    }
+
+    const drawncircle = [];
+    const drawnpin = [];
+    // FeatureGroup is to store editable layers.
+    var drawnItems_draw_control_a6dd22a64b6a6130aecf47f240d50ce6 = new L.featureGroup().addTo(
+        map_9a5fe2b4c0a85f46e0a2eaef8761d87c
+    );
+    options.edit.featureGroup = drawnItems_draw_control_a6dd22a64b6a6130aecf47f240d50ce6;
+    var draw_control_a6dd22a64b6a6130aecf47f240d50ce6 = new L.Control.Draw(
+        options
+    ).addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+    map_9a5fe2b4c0a85f46e0a2eaef8761d87c.on(L.Draw.Event.CREATED, function (e) {//activates when the user draw
+        var layer = e.layer,
+            type = e.layerType;
+        var coords = JSON.stringify(layer.toGeoJSON());
+
+        var coordsdict = JSON.parse(coords);
+
+        if (type === 'circle') {
+            var drawnradius = layer.getRadius()
+            drawnradius = Math.round(drawnradius); // Round the radius of the drawn circle to the nearest whole number
+            layer.setRadius(drawnradius);
+
+        }
+        if (coordsdict['geometry']['type'] == 'Polygon') {
+            localStorage.setItem('Coordinates', coords); //send to index.html
+            console.log('sent to index')
+        }
+        if (coordsdict['geometry']['type'] == 'Point') {//get the center coordinate of the circle
+            coordinates = coordsdict['geometry']['coordinates'];
+
+            localStorage.setItem('circlecoordinates', JSON.stringify(coordinates));
+
+            localStorage.setItem('drawncircleradius', drawnradius);
+            localStorage.setItem('status', 'createdcircle');
+        }
+
+        drawnItems_draw_control_a6dd22a64b6a6130aecf47f240d50ce6.addLayer(layer);
+
+        localStorage.setItem('createdlayer', layer);
+
+
+    });
+    map_9a5fe2b4c0a85f46e0a2eaef8761d87c.on('draw:created', function (e) { //to store the created circle into the existing circle list
+        drawnItems_draw_control_a6dd22a64b6a6130aecf47f240d50ce6.addLayer(e.layer);
+        if (e.layer instanceof L.Circle)
+            drawncircle.push(e.layer);
+    });
+    map_9a5fe2b4c0a85f46e0a2eaef8761d87c.on('draw:deleted', function (e) {
+        const deleteditem = [];
+        var layers = e.layers;
+        layers.eachLayer(function (layer) {
+            // Access the deleted layer's properties
+            console.log(layer); 
+            
+            //if the marker is deleted it will send a "message" to index.html to make app.py delete the circle's detail in the output
+            if (layer instanceof L.Marker) {
+                if (localStorage['status'] === 'postlocation') {
+                    deleteditem.push(layer.getPopup().getContent())
+                    console.log(deleteditem);
+                }
+                //localStorage.setItem('deleteditem', layer.getPopup().getContent());
+            }
+        });
+        localStorage.setItem('deleteditem', JSON.stringify(deleteditem));
+        console.log(localStorage['deleteditem'])
+    });
+
+    var marker;
+
+    function updateMap(lat, lng, zoom) { //when searching it will show this location and the marker will indicate where it is
+        if (marker) {
+            map_9a5fe2b4c0a85f46e0a2eaef8761d87c.removeLayer(marker);
+        }
+        map_9a5fe2b4c0a85f46e0a2eaef8761d87c.setView(new L.LatLng(lat, lng), zoom);
+        marker = L.marker([lat, lng]).addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+        drawnItems_draw_control_a6dd22a64b6a6130aecf47f240d50ce6.addLayer(marker);
+    }
+
+    function zoominprojectsite(lat, lng, zoom) { //to zoom in to the project site or zoom out
+        map_9a5fe2b4c0a85f46e0a2eaef8761d87c.setView(new L.LatLng(lat, lng), zoom);
+    }
+
+
+    function visualizeemployee() { //to create the circles for upload excel coordinates
+        var radius = localStorage.getItem('coordradius');
+        var circlecoords = localStorage['circlecoords'];
+        var projectplacecoords = localStorage['projectplacecoords'];
+        var radiuslist = localStorage['radiuslist'];
+        var locationlist = localStorage['locationlist']
+        circlecoords = JSON.parse(circlecoords);
+        if (radiuslist) {
+            radiuslist = JSON.parse(radiuslist);
+        }
+        if (projectplacecoords) {
+            projectplacecoords = JSON.parse(projectplacecoords);
+        }
+        if (locationlist) {
+            locationlist = JSON.parse(locationlist);
+        }
+        //delete existing layers in a list
+        if (coordmarkers) {
+            for (let i = 0; i < coordmarkers.length; i++) {
+                map_9a5fe2b4c0a85f46e0a2eaef8761d87c.removeLayer(coordmarkers[i]);
+            }
+        }
+        if (circle_array) {
+            for (let i = 0; i < circle_array.length; i++) {
+                map_9a5fe2b4c0a85f46e0a2eaef8761d87c.removeLayer(circle_array[i]);
+            }
+        }
+        if (localStorage['shapetype'] === 'circle') {
+            radius = parseFloat(radius);
+            var redIcon = new L.Icon({
+                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+                //shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+            });
+            //pin that represent employees 
+            let number = 1;
+            console.log(number);
+            circlecoords.forEach(coords => {
+                var pin = L.marker([coords[1], coords[0]], {
+                }).addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+                pin.bindPopup('Pin ' + number).on('click', function (e) {
+                    console.log('clicked')
+                    console.log(localStorage['status'])
+                    localStorage.setItem('clickedpin', pin.getPopup().getContent());
+                });
+                coordmarkers.push(pin);
+                number++;
+                console.log(number);
+            });
+
+
+            if (projectplacecoords) {
+                console.log(locationlist)
+                let projectnumber = 0;
+                //the outer boundary of the project site which is radius + 20
+                projectplacecoords.forEach(coords => {
+                    var circle = L.circle([coords[1], coords[0]], {
+                        radius: radius + 20,
+                        color: '#FFD326'
+                    }).addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+                    circle.bindPopup(locationlist[projectnumber]).on('click', function (e) {
+                        console.log('clicked')
+                        localStorage.setItem('clickedpin', circle.getPopup().getContent());
+                    });
+                    circle_array.push(circle);
+                    console.log(locationlist[projectnumber])
+                    projectnumber++;
+                    console.log(number);
+                });
+                //the primary boundary of the project site which is just the radius 
+                projectnumber = 0;
+                projectplacecoords.forEach(coords => {
+                    var circle = L.circle([coords[1], coords[0]], {
+                        radius: radius,
+                        color: 'red'
+                    }).addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+                    circle.bindPopup(locationlist[projectnumber]).on('click', function (e) {
+                        console.log('clicked')
+                        localStorage.setItem('clickedpin', circle.getPopup().getContent());
+                    });
+                    circle_array.push(circle);
+                    console.log(locationlist[projectnumber])
+                    projectnumber++;
+                    console.log(number);
+                });
+
+
+                //the project site center pin
+                projectnumber = 0;
+                projectplacecoords.forEach(coords => {
+                    var pin = L.marker([coords[1], coords[0]], {
+                        icon: redIcon
+                    }).addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+                    //forces the pop up content of the marker to show
+                    var popup = L.popup({ closeOnClick: false, autoClose: false })
+                        .setContent(locationlist[projectnumber])
+                        .setLatLng([coords[1], coords[0]]);
+                    
+                    pin.bindPopup(popup).on('click', function (e) {
+                        console.log('clicked')
+                        localStorage.setItem('clickedpin', pin.getPopup().getContent());
+                        if (!pin.getPopup().isOpen()) {
+                            pin.openPopup();
+                        }
+                        zoominprojectsite(coords[1], coords[0], 18); //to zoom in to the project site center
+                    });
+                    popup.addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+                    coordmarkers.push(pin);
+                    if (!pin.getPopup().isOpen()) {
+                        pin.openPopup();
+                    }
+                    console.log(locationlist[projectnumber])
+                    projectnumber++;
+                    console.log(number);
+                });
+
+
+            }
+
+            else {//other excel that is uploaded
+                if (radiuslist && !radius) {
+                    number = 1;
+                    circlecoords.forEach((coords, index) => {
+                        var circle = L.circle([coords[1], coords[0]], {
+                            radius: radiuslist[index],
+                        }).addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+                        circle.bindPopup("Circle " + number).on('click', function (e) {
+                            console.log('clicked')
+                            localStorage.setItem('clickedpin', circle.getPopup().getContent());
+                            localStorage.setItem('status', event.data);
+                        });
+                        circle_array.push(circle);
+                        number++;
+                        console.log(number);
+                    })
+
+                }
+                else {
+                    number = 1;
+                    circlecoords.forEach(coords => {
+                        var circle = L.circle([coords[1], coords[0]], {
+                            radius: radius,
+                        }).addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+                        circle.bindPopup("Circle " + number).on('click', function (e) {
+                            console.log('clicked')
+                            localStorage.setItem('clickedpin', circle.getPopup().getContent());
+                            localStorage.setItem('status', event.data);
+                        });
+                        circle_array.push(circle);
+                        number++;
+                        console.log(number);
+                    });
+                }
+            }
+
+        }
+        console.log(localStorage['shapetype']);
+        if (localStorage['shapetype'] === 'pin') { //if the user did not mention any radius or the excel did not have any radius or its not clock records
+            let number = 1;
+            circlecoords.forEach(coords => {
+                var pin = L.marker([coords[1], coords[0]], {
+                    radius: radius,
+                }).addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+                pin.bindPopup('Pin ' + number).on('click', function (e) {
+                    console.log('clicked')
+                    localStorage.setItem('clickedpin', pin.getPopup().getContent());
+                    localStorage.setItem('status', event.data);
+                });
+                coordmarkers.push(pin);
+                number++;
+
+            });
+        }
+    }
+
+    const circle_array = [];
+    const coordmarkers = [];
+    window.addEventListener("message", function (event) {
+        if (event.data === 'locationFound') { //zoom in to the location that the user searched in the search bar
+            console.log('Message received in map.html:', event.data);
+            var latitude = localStorage['latitude'];
+            var longitude = localStorage['longitude'];
+            var zoom_start = localStorage['zoom_start'];
+            if (latitude && longitude && zoom_start) {
+                localStorage.removeItem('dropdownprojectsitechanged')
+                updateMap(latitude, longitude, zoom_start);
+            }
+        }
+        if (event.data === 'postlocation') { //for displaying generated circles
+            console.log('Message received in map.html:', event.data);
+            var circlecoords = localStorage['circlecoords'];
+            var radius = localStorage.getItem('radius');
+            console.log('circlecoords received', circlecoords);
+            console.log('radius received', radius)
+
+            localStorage.setItem('shapetype', 'circle');
+
+            //draw the number of circles and delete existing
+            if (circlecoords && radius) {
+                circlecoords = JSON.parse(circlecoords);
+                //delete existing circles
+                if (circle_array) {
+                    for (let i = 0; i < circle_array.length; i++) {
+                        map_9a5fe2b4c0a85f46e0a2eaef8761d87c.removeLayer(circle_array[i]);
+                    }
+                }
+
+                if (coordmarkers) {
+                    for (let i = 0; i < coordmarkers.length; i++) {
+                        map_9a5fe2b4c0a85f46e0a2eaef8761d87c.removeLayer(coordmarkers[i]);
+                    }
+                }
+
+                if (drawncircle) {
+                    for (let i = 0; i < drawncircle.length; i++) {
+                        map_9a5fe2b4c0a85f46e0a2eaef8761d87c.removeLayer(drawncircle[i]);
+                    }
+                }
+                //creating circle
+                radius = parseFloat(radius);
+                let number = 1
+                circlecoords.forEach(coords => {
+                    var circle = L.circle([coords[1], coords[0]], {
+                        radius: radius,
+                    }).addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+                    circle.bindPopup("Circle " + number).on('click', function (e) {
+                        localStorage.setItem('clickedpin', circle.getPopup().getContent());
+                        localStorage.setItem('status', event.data);
+                    });
+                    circle_array.push(circle);
+                    drawnItems_draw_control_a6dd22a64b6a6130aecf47f240d50ce6.addLayer(circle);
+                    number++;
+                });
+                //create marker 
+                number = 1;
+                circlecoords.forEach(coords => {
+                    var pin = L.marker([coords[1], coords[0]], {
+                        radius: radius,
+                    }).addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+                    pin.bindPopup('Pin ' + number).on('click', function (e) {
+                        console.log('clicked')
+                        console.log(pin.getPopup().getContent())
+                        console.log(event.data)
+                        localStorage.setItem('clickedpin', pin.getPopup().getContent());
+                        localStorage.setItem('status', event.data);
+                    });
+                    coordmarkers.push(pin);
+                    drawnItems_draw_control_a6dd22a64b6a6130aecf47f240d50ce6.addLayer(pin)
+                    number++;
+
+                });
+            } else {
+                console.error("Circle coordinates is missing or not formatted correctly");
+            }
+        }
+
+        //for the upload excel data
+        if (event.data === 'coordlocation' && localStorage['visualize'] === 'true') {
+            console.log('visualize received', localStorage['visualize']);
+            localStorage.setItem('status', event.data);
+            console.log('Message received in map.html:', event.data);
+            console.log('circlecoords received', localStorage['circlecoords']);
+            console.log('radius received', localStorage.getItem('coordradius'));
+            console.log('radiuslist received', localStorage['radiuslist']);
+            console.log('projectplacecoords received', localStorage.getItem('projectplacecoords'));
+
+            visualizeemployee()
+
+        }
+        //when the user search for the pin in the search box in output container, it will zoom into that pin
+        if (event.data === 'findpin') {
+            localStorage.setItem('status', event.data);
+            console.log('findpin');
+            coordmarkers.forEach((pinitem) => {
+                if (localStorage['pinname'] === pinitem.getPopup().getContent()) {
+                    var latlng = pinitem.getLatLng();
+                    console.log(latlng)
+                    var lat = latlng.lat;
+                    var lng = latlng.lng;
+                    map_9a5fe2b4c0a85f46e0a2eaef8761d87c.setView(new L.LatLng(lat, lng), 17);
+                    pinitem.openPopup();
+                }
+            });
+        }//when the user created a new circle, it will also put a center pin in the new circle
+        if (event.data === 'bindpop') {
+            localStorage.setItem('shapetype', 'circle');
+            localStorage.setItem('status', event.data);
+            console.log('bindpop');
+            localStorage.setItem('circlecoordinates', JSON.stringify(coordinates));
+
+            var coords = JSON.parse(localStorage['circlecoordinates']);
+
+            console.log("circlecoordinatespin: " + typeof localStorage['circlecoordinates']);
+            console.log('corods: ' + typeof coords);
+            var number = Number(localStorage['number']) + 1;
+            console.log(number);
+            var pin = L.marker([coords[1], coords[0]], {
+                radius: radius,
+            }).addTo(map_9a5fe2b4c0a85f46e0a2eaef8761d87c);
+            pin.bindPopup('Pin ' + number).on('click', function (e) {
+                console.log('clicked')
+                localStorage.setItem('clickedpin', pin.getPopup().getContent());
+                localStorage.setItem('status', 'postlocation');
+            });
+            coordmarkers.push(pin);
+
+            console.log(pin.getLatLng());
+
+            drawnItems_draw_control_a6dd22a64b6a6130aecf47f240d50ce6.addLayer(pin)
+        }
+    });
+
+    window.addEventListener('storage', () => {
+        console.log(localStorage['visualize']);
+        console.log(localStorage['dropdownprojectsitechanged']);
+        if (localStorage['dropdownprojectsitechanged']) {//when the user changes the selected option in the dropdown box
+            if (localStorage['dropdownprojectsitechanged'] === 'allprojectsite') {
+                zoominprojectsite(1.3521, 103.8198, 12)
+            } else {
+                console.log('dropdownprojectsitechanged: ', localStorage['dropdownprojectsitechanged']);
+                coordmarkers.forEach(marker => {
+                    console.log(marker.getPopup().getContent());
+                    if (marker.getPopup().getContent() === localStorage['dropdownprojectsitechanged']) {
+                        console.log(`Popup content: ${marker.getPopup().getContent()}`);
+                        zoominprojectsite(marker.getLatLng().lat, marker.getLatLng().lng, 19);
+                    }
+                });
+            }
+
+            localStorage.removeItem('dropdownprojectsitechanged')
+        }
+        if (localStorage['switchoff'] === 'false') { //when the user switches the visualize map button to off, it will remove all the visuals
+            if (circle_array) {
+                for (let i = 0; i < circle_array.length; i++) {
+                    map_9a5fe2b4c0a85f46e0a2eaef8761d87c.removeLayer(circle_array[i]);
+                }
+            }
+
+            if (coordmarkers) {
+                for (let i = 0; i < coordmarkers.length; i++) {
+                    map_9a5fe2b4c0a85f46e0a2eaef8761d87c.removeLayer(coordmarkers[i]);
+                }
+            }
+
+            if (drawncircle) {
+                for (let i = 0; i < drawncircle.length; i++) {
+                    map_9a5fe2b4c0a85f46e0a2eaef8761d87c.removeLayer(drawncircle[i]);
+                }
+            }
+        }
+
+        if (localStorage['switchoff'] === 'true') { //when the user switches the visualize map button to on, it will show the visuals
+            visualizeemployee()
+            localStorage.removeItem('switchoff')
+        }
+
+    });
+
+</script>
+
+</html>

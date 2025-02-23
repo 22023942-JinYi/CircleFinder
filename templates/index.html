@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'css/style.css') }}">
+    <!--Fonts-->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+
+    <script src="https://www.w3schools.com/lib/w3.js"></script>
+
+    <!--To add a search function for the dropdown selector-->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+
+    <title>Circle Finder</title>
+    <style>
+        #notification {
+            display: none;
+            background-color: #f44336;
+            color: white;
+            padding: 15px;
+            margin: 15px 0;
+            border: none;
+            text-align: center;
+            z-index: 9999;
+            top: 15px;
+            right: 10px;
+            position: absolute;
+        }
+
+        #mapcontainer {
+            position: relative;
+            width: 70%;
+            top: -10px
+        }
+
+        /* Reset/Normalize CSS */
+        body,
+        input {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            /* Ensure a consistent font */
+            font-style: normal;
+            /* Ensure text is not slanted */
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <a href="/">
+            <h1 id="CircleFinder">circlefinder.io</h1>
+        </a>
+    </header>
+    <!--SEARCHBAR-->
+    <form id="searchForm" class="md-form mt-0"> 
+        <i class="material-icons mdc-button__icon">search</i>
+        <input id="searchbar" class="search-bar" type="text" name="location_name" placeholder="Search"
+            aria-label="Search">
+        <div id="suggestions" class="suggestions" style="display: none;"></div>
+        <input id='finding' type="submit" value="search" class="hidden">
+    </form>
+    <!--MAP-->
+    <div id="mapcontainer">
+        <div id="notification"></div>
+        <div id="generatingnotify" class="generating-notification" style="display: none;"></div>
+        <iframe id="mapFrame" class="mapframe" src="{{ url_for('static', filename= 'map.html') }}" width="100%"
+            height="100%" frameborder="0"></iframe>
+    </div>
+    <!--INPUT AREA-->
+    <div id="calculate" class="calculate-area">
+        <!--TOP NAVIGATION BAR-->
+        <div class="navigation-calculator">
+            <button id="circlegeneratorbutton" class="calculator-header">Circle Generator</button>
+            <button id="uploadcoordsbutton" class="calculator-header">Upload Excel</button>
+            <button id="helpbutton" class="calculator-header">Help</button>
+        </div>
+        <script>
+            document.getElementById('circlegeneratorbutton').addEventListener('click', () => {
+                const circlegenerator = document.getElementById('circlegenerator');
+                const uploadcoords = document.getElementById('uploadcoords');
+                const helppage = document.getElementById('helppage');
+
+                circlegenerator.style.display = 'block';
+                uploadcoords.style.display = 'none';
+                helppage.style.display = 'none';
+            });
+
+            document.getElementById('uploadcoordsbutton').addEventListener('click', () => {
+                const circlegenerator = document.getElementById('circlegenerator');
+                const uploadcoords = document.getElementById('uploadcoords');
+                const helppage = document.getElementById('helppage');
+
+                uploadcoords.style.display = 'block';
+                circlegenerator.style.display = 'none';
+                helppage.style.display = 'none';
+            });
+            document.getElementById('helpbutton').addEventListener('click', () => {
+                const helppage = document.getElementById('helppage');
+                const circlegenerator = document.getElementById('circlegenerator');
+                const uploadcoords = document.getElementById('uploadcoords');
+
+                helppage.style.display = 'block';
+                uploadcoords.style.display = 'none';
+                circlegenerator.style.display = 'none';
+            })
+
+        </script>
+        <!--CIRCLE GENERATOR-->
+        <div class="circlegenerator" id="circlegenerator" style="display: none;">
+            <div class="radiusinput">
+                <label class="circleradius">Radius of the circle: </label>
+                <input id='circle-radius' class='radius' type="number" name="radius" step="0.01" min="0"
+                    placeholder="Enter radius size(m)">
+            </div>
+            <div class="circleinput">
+                <label class="numberofcircle">Number of circles: </label>
+                <input id='circle-number' class="circlenumber" type="number" min="0" name="nocircle"
+                    placeholder="Enter number of circles">
+            </div>
+            <div class="item">
+                <label class="autogenerate">Auto Generate</label>
+                <div class="toggle-pill-color">
+                    <input type="checkbox" id="pill3" name="check">
+
+                    <label for="pill3"></label>
+                </div>
+            </div>
+            <button id="shapearea" class="calculate-button">Find Coordinates</button>
+
+            <div id='areatextbox' class="result" style="display: none;">
+                <input type="text" id="searcharea" class="searchcirclepin" placeholder="Search area">
+                <button class="hidden" id="submitarea" onclick="searchText('text', 'searcharea')">Search</button>
+                <div id='text' class="text-box" style="overflow-y:scroll;" style="display: none;">
+
+                </div>
+            </div>
+            <button id="downloadbutton" class="downloadbut" style="display: none;">Download</button>
+        </div>
+        <!--UPLOAD EXCEL FILE SECTION-->
+        <div id="uploadcoords" class="uploadcoords">
+            <div class="radiusinput">
+                <label class="circleradius">Radius of the circle: </label>
+                <input id="circle-radius-coords" class="radius" type="number" name="radius" step="0.01" min="0"
+                    placeholder="Enter radius size(m)">
+
+            </div>
+            <div class="uploadarea">
+                <label class="uploadbuttontext">Upload Excel file(s):</label>
+                <button id="uploadbutton" class="uploadbutton"
+                    onclick="document.getElementById('fileInput').click()">Upload
+                    Excel File</button>
+                <input type="file" id="fileInput" class="hidden" multiple>
+                <button id="refreshbutt" class="refresh-button">
+                    ↻
+                </button>
+            </div>
+            <!--SELECTING EMPLOYEE BEFORE PROCESSING-->
+            <div class="chooseemployeearea" id="choosingemployee">
+                <label class="employeetext">Choose Employee:</label>
+                <select id="chooseemployeedropdown" class="employeedropdown" name="chooseemployeedropdown">
+                    <option value="allemployee">Select All Employee</option>
+                    {% for employee in chooseemployee %}
+                    <option value="{{ employee }}">{{ employee }}</option>
+                    {% endfor %}
+                </select>
+
+                <script>
+                    localStorage.removeItem('visualize')
+                    $(document).ready(function () {
+                        $('#chooseemployeedropdown').select2({
+                            theme: 'theme3'
+                        });
+                        $('#chooseemployeedropdown').on('change', function () {
+                            localStorage.setItem('chosenemployeevalue', this.value);
+                            console.log(this.value)
+                        })
+                    });
+
+                </script>
+
+            </div>
+
+            <button id="uploadarea" class="calculate-button">Find Coordinates</button>
+            <!--OUTPUT CONTAINER-->
+            <div id='coordtextbox' class='result' style="display: none;">
+                <input type="text" id="searchbarcoords" class="searchcirclepin" placeholder="Search area">
+                <button class="hidden" id="coordsbutton"
+                    onclick="searchText('coordtext', 'searchbarcoords')">Search</button>
+                <select id="dropdown" class="dropdownarea" name="dropdown">
+
+                </select>
+
+                <select id="dropdownprojectsite" class="dropdownplace" name="dropdownplace"></select>
+
+                <input type="date" id="datepicker" name="datepicker" class="datepick">
+
+
+                <div id='coordtext' class="text-box" style="overflow-y:scroll;" style="display: none;">
+
+                </div>
+            </div>
+            <button id="downloadbuttoncoords" class="downloadbut" style="display: none;">Download</button>
+            <div class="item" style="display: none;">
+                <label class="autogenerate">Aggregate Circles</label>
+                <div class="toggle-pill-color">
+                    <input type="checkbox" id="overlapcircle" name="check">
+
+                    <label for="overlapcircle"></label>
+                </div>
+            </div>
+
+            <!--TO VISUALIZE MAP-->
+            <div class="visualizeitem">
+                <label class="autogenerate">Visualize Map</label>
+                <div class="toggle-pill-color">
+                    <input type="checkbox" id="visualizemap" name="check">
+
+                    <label for="visualizemap"></label>
+                </div>
+            </div>
+
+        </div>
+        <!--HELP SECTION-->
+        <div id="helppage" class="helppage" style="display: none;">
+            <h3>Welcome to Help!</h3>
+            <h4>Circle Generator</h4>
+            <h5>How to start?</h5>
+            <p>
+                Begin by selecting the polygon or square icon located at the top left-hand corner of the map interface.
+                Define your area by either dragging to create a square or clicking to mark the vertices of a polygon,
+                ensuring closure by returning to the starting point.</p>
+            <p>Specify the desired radius of each circle in meters.
+                Enable automatic generation by toggling the corresponding switch, or manually input the
+                number of circles required before proceeding to locate their coordinates.</p>
+            <h5>How to edit the circle placements?</h5>
+            <p>If adjustments to circle placement are necessary,
+                utilize the trash bin icon to delete undesired circles and the marker in the circle. Save your changes
+                to view updates in the output text box, where additions or deletions will be immediately reflected.</p>
+            <p>For further customization, add circles directly onto the map interface, and observe
+                instant updates in the output textbox. Upon downloading the output, you will receive both a
+                .txt file and an Excel sheet.</p>
+
+            <h4>Upload Excel</h4>
+            <h5>How to start?</h5>
+            <p>For Clock Records and Project Sites file:<br>
+                Just choose the employee that you want to see the details, you do not need to upload the file as it is connected 
+                to the directory of the latest file. If you do not wish to see the latest, upload the older versions of the file by 
+                clicking on the Upload Excel File button. 
+                If you did not indicate the radius of the circle, it will be 100m by default upon submission.
+                Then it will generate the locations a map and pins resembling each employee. At the top of the text box,
+                you can filter results
+                by employee names and data. These filters will affect the map visualization and the .txt file output but
+                not for the CSV file. </p>
+            <p>For other files:<br>
+                Click on the Upload Excel File which allow you to select one or multiple files.</p>
+            <p>For files that lack radius specification:<br>
+                It will turn into pins unless there is a Radius column in the excel file, then it will take the radius.
+                You can also review the previous files that you downloaded from the Circle Generator here.</p>
+            <p>Why are my visuals not updated?<br>
+                Just switch the Visualize Map off and on again. Then it will be updated.
+            </p>
+
+            <h4>General questions</h4>
+            <h5>How to find the details of the circle? (Also applies to Clock Records)</h5>
+            <p>Click the pin that is in the center of the circle</p>
+            <h5>I can't find the location</h5>
+            <p>Click the search bar, key in the address or the postal code. It will pop up suggested
+                locations. Then, click on it to get the most accurate location. If it is not working, it could be due to
+                too many requests.
+            </p>
+
+        </div>
+        <style>
+            .highlight {
+                background-color: yellow;
+            }
+
+            .no-scroll {
+                overflow: hidden;
+            }
+        </style>
+        <script>
+
+            //to remove the uploaded files in the folder
+            document.getElementById('refreshbutt').addEventListener('click', function (event) {
+                location.reload()
+                fetch('/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+            })
+
+            //to initiate the search when the user enter in the search bar
+            const searchinput = document.getElementById('searcharea');
+            searchinput.addEventListener('keypress', function (event) {
+                if (event.key === 'Enter') {
+                    console.log('submitarea clicked');
+                    event.preventDefault();
+                    document.getElementById('submitarea').click();
+                }
+            });
+
+            const searchbarcoords = document.getElementById('searchbarcoords');
+            searchbarcoords.addEventListener('keypress', function (event) {
+                if (event.key === 'Enter') {
+                    console.log('searchbarcoords clicked');
+                    event.preventDefault();
+                    document.getElementById('coordsbutton').click();
+                }
+            });
+
+            //search the text that you input in the search that is in the output container and scrolls to the
+            //spot that can be found and highlights that part that is the same
+            function searchText(textbox, searchbar) {
+                const mapcontainer = document.getElementById('mapcontainer');
+                // get the search term
+                document.body.classList.add('no-scroll');
+                mapcontainer.style.overflow = 'hidden';
+                const searchTerm = document.getElementById(searchbar).value;
+
+                //get the content container
+                const contentContainer = document.getElementById(textbox);
+
+                //remove previous highlights
+                removeHighlights(contentContainer);
+
+                if (searchTerm) {
+                    //create a regular expression to match the search term, case insensitive
+                    const regex = new RegExp(searchTerm, 'gi');
+
+                    //get the content of the container
+                    const content = contentContainer.innerHTML;
+
+                    //replace the matched terms with highlighted span elements
+                    const highlightedContent = content.replace(regex, match => `<span class="highlight">${match}</span>`);
+
+                    //update the container with highlighted content
+                    contentContainer.innerHTML = highlightedContent;
+
+                    //scroll to the first occurrence
+                    const firstOccurrence = document.querySelector('.highlight');
+                    if (firstOccurrence) {
+                        firstOccurrence.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        var pinnumber = searchTerm.match(/\d+/g);
+                        if (pinnumber) {
+                            var pinname = 'Pin ' + pinnumber
+                        }
+                        else {
+                            pinname = searchTerm
+                        }
+                        localStorage.setItem('pinname', pinname);
+                        console.log(localStorage.getItem('pinname'));
+                        var mapFrame = document.getElementById('mapFrame');
+                        mapFrame.contentWindow.postMessage('findpin', '*');
+                    }
+
+                }
+
+            }
+
+            function removeHighlights(container) {
+                //replace all highlighted spans with their inner text
+                container.innerHTML = container.innerHTML.replace(/<span class="highlight">(.*?)<\/span>/g, '$1');
+            }
+        </script>
+
+        <script>
+            //to get the files that is uploaded through the button in the upload excel section
+            const fileInput = document.getElementById('fileInput');
+            fileInput.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            function handleFiles(files) { //sends the files to app.py to put it in the UPLOAD_FOLDER
+                const formData = new FormData();
+                for (const file of files) {
+                    formData.append('files', file);
+                }
+
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                })
+                    //uploading the files in to the website
+                    .then(response => response.json())
+                    .then(data => {
+
+                        const chooseemployeedropdown = document.getElementById('chooseemployeedropdown');
+                        chooseemployeedropdown.innerHTML = '';
+
+                        console.log(data);
+                        alert('Files uploaded successfully');
+                        localStorage.clear();
+                        //to get the employeelist that they got in the upload and put in the dropdown area
+                        if (data.chooseemployee) {
+                            console.log(data.chooseemployee)
+                            const option = document.createElement('option');
+                            option.value = 'allemployee';
+                            option.textContent = 'Select All Employee';
+                            chooseemployeedropdown.appendChild(option);
+
+                            data.chooseemployee.forEach(name => {
+                                const option = document.createElement('option');
+                                option.value = name;
+                                option.textContent = name;
+                                chooseemployeedropdown.appendChild(option);
+                            })
+                            localStorage.setItem('chosenemployeevalue', 'allemployee');
+                        }
+
+                        $(document).ready(function () {// adds the search feature in the dropdown
+                            $('#chooseemployeedropdown').select2({
+                                theme: 'theme3'
+                            });
+                            localStorage.setItem('chosenemployeevalue', 'allemployee');
+                            $('#chooseemployeedropdown').on('change', function () { //if the selection changed, it will send the chosen one to
+                                                                                    // the createcirclepin to send it to app.py and then it will 
+                                                                                    //only select the employee that they chose
+                                localStorage.setItem('chosenemployeevalue', this.value);
+                                console.log(this.value)
+                            })
+                        })
+
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        alert('Error uploading files');
+                    });
+            }
+        </script>
+
+    </div>
+
+
+    <h2 id="coordsOutput" class="hidden"></h2>
+    <script>
+        adjustMapFrameHeight();
+
+        // add event listener to adjust height on window resize
+        window.addEventListener('resize', adjustMapFrameHeight);
+
+        //function to adjust mapFrame height
+        function adjustMapFrameHeight() {
+            var width = window.innerWidth;
+            var height = window.innerHeight;
+            if (width > 1200 && height > 920) {
+                console.log('Adjusting')
+                var mapFrame = document.getElementById('mapFrame');
+                mapFrame.style.height = window.innerHeight - 72 + 'px';
+            }
+            else {
+                console.log('Small')
+                if (width < 1200) {
+                    window.resizeTo(1200, height);
+                }
+                if (height < 920) {
+                    window.resizeTo(width, 920);
+                }
+            }
+
+        }
+
+        //to know whether the user wants the circle to be autogenerated or not
+        var isChecked = false;
+        document.getElementById("pill3").addEventListener("change", function () {
+            isChecked = this.checked;
+            console.log(isChecked);
+            if (this.checked) {
+                document.getElementById("circle-number").disabled = true;
+            } else {
+                document.getElementById("circle-number").disabled = false;
+            }
+        });
+
+        var overlapchecked = false;
+        document.getElementById("overlapcircle").addEventListener("change", function () {
+            overlapchecked = this.checked;
+            console.log(overlapchecked);
+        });
+
+        //to know whether to virtualize the map or not
+        var visualize = false;
+        document.getElementById("visualizemap").addEventListener("change", function () {
+            visualize = this.checked;
+            localStorage.setItem('visualize', visualize);
+            localStorage.setItem('switchoff', visualize);
+            console.log(visualize);
+        });
+
+        //to get the selected date that they picked
+        const datepicker = document.getElementById('datepicker');
+        datepicker.addEventListener('change', function () {
+            var employee = '';
+            if (localStorage['dropdownchanged']) {
+                var employee = document.getElementById('dropdown').value;
+            }
+            var coordradius = document.getElementById('circle-radius-coords').value;
+            console.log('Selected value:', datepicker.value);
+            console.log(employee);
+            fetch('/searchoutput', { //to find the detail that is the same day as the user picked
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 'finddate': this.value, 'radius': coordradius, 'employee': employee })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    var textbox = document.getElementById('coordtext');
+                    textbox.innerHTML = data.content;
+                    localStorage.setItem('shapetype', data.shapetype);
+                    localStorage.setItem('circlecoords', JSON.stringify(data.findcoords));
+                    localStorage.setItem('projectplacecoords', JSON.stringify(data.projectplacecoords))
+                    if (coordradius) {
+                        localStorage.setItem('coordradius', coordradius);
+                    }
+                    console.log(localStorage['shapetype']);
+                    console.log(localStorage['findcoords']);
+                    console.log(localStorage['coordradius'])
+
+                    var mapFrame = document.getElementById('mapFrame');
+                    mapFrame.contentWindow.postMessage('coordlocation', '*');
+                })
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            localStorage.removeItem('Coordinates');
+
+            function calculateCentroid(coordinates) { //find the center of the polygon using the coordinates
+                let sumX = 0;
+                let sumY = 0;
+                let n = coordinates.length;
+
+                for (let i = 0; i < n; i++) {
+                    sumX += coordinates[i][0];
+                    sumY += coordinates[i][1];
+                }
+
+                let centerX = sumX / n;
+                let centerY = sumY / n;
+
+                return [centerX, centerY];
+            }
+
+            //function to extract polygon coordinates
+            function getPolygonCoordinates(callback) { //when the button is pressed it will trigger this
+
+                const generatingnotify = document.getElementById('generatingnotify');
+                const searchForm = document.getElementById('searchForm');
+                //const downloadpage = document.getElementById('downloadpage');
+                var downloadbut = document.getElementById('downloadbutton');
+                var coordsOutput = document.getElementById('coordsOutput');
+                var textbox = document.getElementById('text');
+                var coordinatesdata = localStorage['Coordinates'];
+                var radius = document.getElementById('circle-radius').value;
+                var circlenumber = document.getElementById('circle-number').value;
+                const suggestionsContainer = document.getElementById('suggestions');
+
+                generatingnotify.style.display = 'block';
+                generatingnotify.textContent = 'Generating...';
+                console.log('circlenumber');
+                console.log(circlenumber);
+                console.log('circlenumber');
+
+                if (coordinatesdata) {
+                    if (radius && (circlenumber || (circlenumber == false && isChecked))) {
+                        if (circlenumber == false) {
+                            circlenumber = 1;
+                            console.log(isChecked);
+                            console.log(circlenumber);
+                        }
+                        //to get the coordinates from the long string
+                        var clearing = coordinatesdata.replace('{"type":"Feature","properties":{},"geometry":{"type":"Polygon","coordinates":[[[', '');
+                        var coordinates = clearing.replace(']]]}}', '');
+                        coordsOutput.textContent = coordinates;
+
+                        fetch('/calculate_area', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ 'coordinate': coordinates, 'radius': radius, 'circlenumber': circlenumber, 'isChecked': isChecked }), //Send to app.py to let it calculate
+
+                        })
+                            .then(response => {
+                                return response.json();
+                            })
+                            .then(data => { //get the data after app.py calculates 
+                                localStorage.removeItem('dropdownprojectsitechanged')
+                                coordsOutput.textContent = coordinates;
+                                console.log(data.content);
+                                textbox.innerHTML = data.content; //fill up the box with the content that lets the user know the center points of the circle
+
+                                var projected_coords = data.projected_coords;
+                                centroid = calculateCentroid(projected_coords);
+                                console.log('Message sending to map.html:', data);
+
+                                //now implement the zoom into this coordinate then draw it out on the map2.html
+                                localStorage.setItem('polygoncoords', JSON.stringify(projected_coords));
+                                localStorage.setItem('longitudesecondmap', centroid[0]);
+                                localStorage.setItem('latitudesecondmap', centroid[1]);
+                                localStorage.setItem('circlecoords', JSON.stringify(data.circle_coords)); //store as JSON string
+
+                                localStorage.setItem('radius', radius);
+                                var mapFrame = document.getElementById('mapFrame');
+                                mapFrame.contentWindow.postMessage('postlocation', '*');
+
+                                if (data.notify) {
+                                    generatingnotify.style.display = 'none';
+                                    showNotification(data.notify, true)
+                                } else {
+                                    generatingnotify.style.display = 'none';
+                                    showNotification('Successfully Generated', true)
+                                }
+                                generatingnotify.style.display = 'none';
+                                downloadbut.style.display = 'block';
+                                const areatextbox = document.getElementById('areatextbox');
+                                areatextbox.style.display = 'block';
+
+                            })
+                            .catch(error => {
+                                textbox.innerHTML = '';
+                                generatingnotify.style.display = 'none';
+                                showNotification('An error occurred when calculating', false);
+                                console.log(error)
+
+                                resetFunction(); //reset the function in case of an error
+                            });
+                    } else {
+                        textbox.innerHTML = '';
+                        generatingnotify.style.display = 'none';
+                        showNotification('Please enter all the fields', false);
+                    }
+                } else {
+                    textbox.innerHTML = ''
+                    generatingnotify.style.display = 'none';
+                    showNotification('No polygon drawn yet', false);
+                }
+
+                function resetFunction() {
+                    //reset all the UI elements and variables to their initial state
+                    coordsOutput.textContent = '';
+                    textbox.innerHTML = '';
+                    localStorage.removeItem('polygoncoords');
+                    localStorage.removeItem('longitudesecondmap');
+                    localStorage.removeItem('latitudesecondmap');
+                    localStorage.removeItem('circlecoords');
+                    localStorage.removeItem('radius');
+
+                    //downloadpage.style.display = 'none';
+                    suggestionsContainer.style.display = 'none';
+                    generatingnotify.style.display = 'none';
+                    //additional reset logic if needed
+                }
+            }
+
+            function createcirclepin(callback) { //for the coords that are in the excel
+
+                const downloadbut = document.getElementById('downloadbuttoncoords');
+                var coordradius = document.getElementById('circle-radius-coords').value;
+                localStorage.setItem('coordradius', coordradius);
+                console.log(coordradius);
+                var textbox = document.getElementById('coordtext');
+                const generatingnotify = document.getElementById('generatingnotify');
+                generatingnotify.style.display = 'block';
+                generatingnotify.textContent = 'Generating...';
+                console.log(coordradius, overlapchecked);
+                
+                fetch('/process', { //to fetch the process in app.py
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 'coordradius': coordradius, 'overlapchecked': overlapchecked, 'chosenemployeevalue': localStorage['chosenemployeevalue'] }), //Send to app.py to let it calculate
+                })
+                    .then(response => {
+                        return response.json();
+                    })
+
+                    .then(data => {
+                        if (data.error) {
+                            generatingnotify.style.display = 'none';
+                            showNotification(data.error, false);
+                        }
+
+                        //checks whether the data that was produced is employee data
+                        if ((data.withradius === undefined || data.withradius === false) && (data.notspecial === undefined || data.notspecial === false)) {
+                            
+                            const dropdownplace = document.getElementById('dropdownprojectsite');
+                            //to enable the feature
+                            $('#dropdownprojectsite').select2({
+                                display: 'block'
+                            })
+                            $('#dropdown').select2({
+                                display: 'block'
+                            })
+                            document.getElementById('datepicker').style.display = 'block'
+                            //store the projects sites into the dropdown container
+                            const option = document.createElement('option');
+                            option.value = 'allprojectsite';
+                            option.textContent = 'Zoom out of Project Sites';
+                            dropdownplace.appendChild(option);
+
+                            data.locationlist.forEach(site => {
+                                const option = document.createElement('option');
+                                option.value = site;
+                                option.textContent = site;
+                                dropdownplace.appendChild(option);
+                            })
+                            //to zoom in the project sites
+                            $(document).ready(function () {
+                                $('#dropdownprojectsite').select2({
+                                    theme: 'theme1' // Use a unique class or theme name for dropdownprojectsite
+                                });
+                                $('#dropdownprojectsite').on('change', function () {
+                                    localStorage.setItem('dropdownprojectsitechanged', this.value);
+                                    console.log('Selected value:', this.value);
+                                });
+
+                            });
+
+
+                            const dropdown = document.getElementById('dropdown');
+                            dropdown.innerHTML = '';
+
+                            console.log(data.content);
+                            console.log(data.circle_coords);
+                            console.log(data);
+                            textbox.innerHTML = data.content; //fill up the box with the content that lets the user know the center points of the circle
+
+                            //if they put all amployee before the process, they can still filter but it will take longer
+                            if (data.employeenames) {
+                                const option = document.createElement('option');
+                                option.value = 'allemployee';
+                                option.textContent = 'Select All Employee';
+                                dropdown.appendChild(option);
+                                data.employeenames.forEach(name => {
+                                    const option = document.createElement('option');
+                                    option.value = name;
+                                    option.textContent = name;
+                                    dropdown.appendChild(option);
+                                })
+                            }
+                            //for filtering the employee name and the date
+                            $(document).ready(function () {
+                                $('#dropdown').select2({
+                                    theme: 'theme2' //use another unique class or theme name for dropdown
+                                });
+                                $('#dropdown').on('change', function () {
+                                    localStorage.setItem('dropdownchanged', true);
+                                    var coordradius = document.getElementById('circle-radius-coords').value;
+                                    var finddate = document.getElementById('datepicker').value;
+                                    console.log('Selected value:', this.value);
+                                    console.log(finddate);
+                                    fetch('/searchoutput', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Content-Type': 'application/json'
+                                        },
+                                        body: JSON.stringify({ 'employee': this.value, 'radius': coordradius, 'finddate': finddate })
+                                    })
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            var textbox = document.getElementById('coordtext');
+                                            textbox.innerHTML = data.content;
+                                            localStorage.setItem('shapetype', data.shapetype);
+                                            localStorage.setItem('circlecoords', JSON.stringify(data.findcoords));
+                                            if (coordradius) {
+                                                localStorage.setItem('coordradius', coordradius);
+                                            }
+                                            console.log(localStorage['shapetype']);
+                                            console.log(localStorage['findcoords']);
+                                            console.log(localStorage['coordradius'])
+
+                                            var mapFrame = document.getElementById('mapFrame');
+                                            mapFrame.contentWindow.postMessage('coordlocation', '*');
+                                        })
+                                });
+
+                            });
+
+                            //define the start and end dates
+                            const startDate = data.startdate;
+                            const endDate = data.enddate;
+
+                            //get the date picker element
+                            const datePicker = document.getElementById('datepicker');
+                            datePicker.style.display = 'block';
+                            //set the min and max attributes
+                            datePicker.min = startDate;
+                            datePicker.max = endDate;
+                            if (data.projectplacecoords) { //checks if it exists then it will send the coordinates 
+                                                            //of the project site to the map
+                                if (!coordradius) {
+                                    coordradius = 100
+                                }
+                                localStorage.setItem('shapetype', 'circle')
+                                localStorage.setItem('coordradius', coordradius);
+                                localStorage.setItem('circlecoords', JSON.stringify(data.circle_coords));
+                                localStorage.setItem('checkmobileclock', data.checkmobileclock);
+                                localStorage.setItem('locationlist', JSON.stringify(data.locationlist))
+                                console.log(data.checkmobileclock);
+                                console.log(data.projected_coords);
+                                localStorage.setItem('projectplacecoords', JSON.stringify(data.projectplacecoords));
+                                downloadbut.style.display = 'block';
+                                generatingnotify.style.display = 'none';
+                                const coordtextbox = document.getElementById('coordtextbox');
+                                coordtextbox.style.display = 'block';
+                                showNotification(data.notify, true)
+                                console.log('Message sending to map.html:', data);
+                                var mapFrame = document.getElementById('mapFrame');
+                                mapFrame.contentWindow.postMessage('coordlocation', '*');
+                            }
+                        }
+                        //checks if it is data that is not related to employee and project site and sends it to map.html
+                        else {
+                            const dropdownplace = document.getElementById('dropdownprojectsite');
+                            const datePicker = document.getElementById('datepicker');
+                            const dropdown = document.getElementById('dropdown');
+                            const employeeselector = document.getElementById('choosingemployee');
+                            $('.select2-container').css('display', 'none');
+                            dropdown.style.display = 'none';
+                            datePicker.style.display = 'none';
+                            dropdownplace.style.display = 'none';
+                            employeeselector.style.display = 'none';
+                            textbox.innerHTML = data.content;
+                            if (data.notspecial) {
+                                localStorage.setItem('notspecial', data.notspecial)
+                            }
+                            if (!coordradius) {
+                                if (data.radiuslist) {
+                                    console.log(coordradius)
+                                    localStorage.setItem('shapetype', 'circle')
+                                    localStorage.setItem('radiuslist', JSON.stringify(data.radiuslist));
+                                    console.log(data.circle_coords);
+                                    localStorage.setItem('circlecoords', JSON.stringify(data.circle_coords));
+                                    downloadbut.style.display = 'block';
+                                    generatingnotify.style.display = 'none'
+                                    const coordtextbox = document.getElementById('coordtextbox');
+                                    coordtextbox.style.display = 'block';;
+                                    showNotification(data.notify, true)
+                                    console.log('Message sending to map.html:', data);
+                                    var mapFrame = document.getElementById('mapFrame');
+                                    mapFrame.contentWindow.postMessage('coordlocation', '*');
+                                }
+                                else {
+
+                                    localStorage.setItem('shapetype', 'pin')
+                                    console.log(data.circle_coords);
+                                    localStorage.setItem('circlecoords', JSON.stringify(data.circle_coords));
+                                    downloadbut.style.display = 'block';
+                                    generatingnotify.style.display = 'none'
+                                    const coordtextbox = document.getElementById('coordtextbox');
+                                    coordtextbox.style.display = 'block';;
+                                    showNotification(data.notify, true)
+                                    console.log('Message sending to map.html:', data);
+                                    var mapFrame = document.getElementById('mapFrame');
+                                    mapFrame.contentWindow.postMessage('coordlocation', '*');
+                                }
+                            }
+                            else {
+                                localStorage.setItem('shapetype', 'circle')
+                                localStorage.setItem('coordradius', coordradius);
+                                console.log(data.circle_coords);
+                                localStorage.setItem('circlecoords', JSON.stringify(data.circle_coords));
+                                downloadbut.style.display = 'block';
+                                generatingnotify.style.display = 'none'
+                                const coordtextbox = document.getElementById('coordtextbox');
+                                coordtextbox.style.display = 'block';;
+                                showNotification(data.notify, true)
+                                console.log('Message sending to map.html:', data);
+                                var mapFrame = document.getElementById('mapFrame');
+                                mapFrame.contentWindow.postMessage('coordlocation', '*');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error)
+                        textbox.innerHTML = '';
+                        if (error.name === 'AbortError') {
+                            downloadbut.style.display = 'none';
+                            generatingnotify.style.display = 'none';
+                            showNotification('Request timed out', false);
+                        }
+                        else {
+                            generatingnotify.style.display = 'none';
+                            showNotification('An error occurred when calculating', false);
+                        }
+                    })
+
+            }
+
+            //attach the getPolygonCoordinates function to the button
+            document.getElementById('shapearea').addEventListener('click', getPolygonCoordinates)
+
+            //to get the zip file that was created in app.py and turn it into a downloadable link which will be clicked
+            document.getElementById('downloadbutton').addEventListener('click', function (event) { //to download the tempfile which is turned into a url
+                fetch('/send_tempfile', { method: 'POST' })
+                    .then(response => {
+                        //extract filename from response headers
+                        const contentDisposition = response.headers.get('Content-Disposition');
+                        let filename = 'output.zip';
+                        if (contentDisposition) {
+                            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                            const matches = filenameRegex.exec(contentDisposition);
+                            if (matches != null && matches[1]) {
+                                filename = matches[1].replace(/['"]/g, '');
+                            }
+                        }
+                        console.log(filename)
+                        localStorage.setItem('filename', filename)
+                        //return the blob object
+                        return response.blob();
+                    })
+
+                    .then(blob => {
+
+                        //create a temporary URL for the file
+                        const url = URL.createObjectURL(blob);
+
+                        //create a link element and set the URL and download attribute
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = localStorage['filename'];
+
+                        //programmatically click the link to trigger the download
+                        link.click();
+
+                        //revoke the temporary URL to free up memory
+                        URL.revokeObjectURL(url);
+
+                        showNotification('Map updated and result downloaded!', true);
+                    })
+                    .catch(error => {
+                        console.log(error)
+                        showNotification('An error occurred when downloading the file', false);
+                    });
+            })
+
+            document.getElementById('uploadarea').addEventListener('click', createcirclepin)
+            document.getElementById('downloadbuttoncoords').addEventListener('click', function (event) {
+                fetch('/send_tempfile', { method: 'POST' })
+                    .then(response => {
+                        //extract filename from response headers
+                        const contentDisposition = response.headers.get('Content-Disposition');
+                        let filename = 'output.zip';
+                        if (contentDisposition) {
+                            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                            const matches = filenameRegex.exec(contentDisposition);
+                            if (matches != null && matches[1]) {
+                                filename = matches[1].replace(/['"]/g, '');
+                            }
+                        }
+                        console.log(filename)
+                        localStorage.setItem('filename', filename)
+                        //return the blob object
+                        return response.blob();
+                    })
+               
+                    .then(blob => {
+
+                        //create a temporary URL for the file
+                        const url = URL.createObjectURL(blob);
+
+                        //create a link element and set the URL and download attribute
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = localStorage['filename'];
+
+                        //programmatically click the link to trigger the download
+                        link.click();
+
+                        //revoke the temporary URL to free up memory
+                        URL.revokeObjectURL(url);
+
+                        showNotification('Map updated and result downloaded!', true);
+                    })
+                    .catch(error => {
+                        console.log(error)
+                        showNotification('An error occurred when downloading the file', false);
+                    });
+            })
+        });
+
+
+        const searchInput = document.getElementById('searchbar');
+        const suggestionsContainer = document.getElementById('suggestions');
+        let debounceTimeout;
+        let currentFetchController;
+
+
+        searchInput.addEventListener('input', function () { //to give suggested location name when the user is typing
+            const query = searchInput.value.trim();
+
+            //clear previous debounce timeout
+            clearTimeout(debounceTimeout);
+
+            //cancel the previous fetch request if it exists
+            if (currentFetchController) {
+                currentFetchController.abort();
+            }
+
+            if (query.length >= 3) {
+                // set a new debounce timeout
+                debounceTimeout = setTimeout(() => {
+                    //create a new AbortController for this fetch
+                    currentFetchController = new AbortController();
+                    const { signal } = currentFetchController;
+
+                    fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=5`, { signal }) //can only generate 5 suggestions
+                        .then(response => response.json())
+                        .then(data => {
+                            suggestionsContainer.innerHTML = '';
+                            data.forEach(place => {
+                                const button = document.createElement('button'); //create buttons so when the user clicks on the location that pops up then it will be submitted
+                                button.textContent = place.display_name;
+                                button.dataset.lat = place.lat;
+                                button.dataset.lon = place.lon;
+                                suggestionsContainer.appendChild(button);
+                                suggestionsContainer.style.display = 'block';
+                            });
+                        })
+                        .catch(error => {
+                            if (error.name !== 'AbortError') {
+                                console.error('Fetch error:', error);
+                                showNotification('HTTPSConnectionPool problem', false);
+                            }
+                        });
+                }, 300); //adjust debounce delay as needed (300ms in this case)
+            } else {
+                suggestionsContainer.innerHTML = '';
+                suggestionsContainer.style.display = 'none';
+            }
+        });
+
+
+
+        suggestionsContainer.addEventListener('click', function (e) { //fill up the searchbar with what they pressed
+            if (e.target.tagName === 'BUTTON') {
+                const buttonText = e.target.textContent;
+                searchInput.value = buttonText;
+                suggestionsContainer.style.display = 'none';
+            }
+        });
+
+
+        document.getElementById('searchForm').addEventListener('submit', function (event) {
+            event.preventDefault(); //prevent the form from submitting the traditional way
+
+            const formData = new FormData(this);
+
+            fetch('/search_location', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('Message sending to map.html:', event.data);
+                        localStorage.setItem('latitude', data.latitude);
+                        localStorage.setItem('longitude', data.longitude);
+                        localStorage.setItem('zoom_start', data.zoom_start);
+                        var mapFrame = document.getElementById('mapFrame');
+                        mapFrame.contentWindow.postMessage('locationFound', '*');
+                        showNotification('Location found and map updated!', true);
+                    } else {
+                        showNotification(data.error, false);
+                    }
+                })
+                .catch(error => {
+                    showNotification('An error occurred while searching for the location.', false);
+                });
+        });
+
+        function closepopup() {
+            //downloadpage.style.display = 'none';
+            suggestionsContainer.style.display = 'none';
+        }
+
+        function showNotification(message, isSuccess) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            notification.style.backgroundColor = isSuccess ? '#4CAF50' : '#f44336';
+            notification.style.fontFamily = 'Arial, sans-serif';
+            notification.style.blockSize = 30;
+            notification.style.position = 'absolute';
+            notification.style.top = '15px'
+            notification.style.right = '10px';
+            notification.style.padding = '10px';
+            notification.style.borderRadius = '5px';
+            notification.style.zIndex = '9999';
+
+            // Hide notification after 5 seconds
+            setTimeout(() => { //show notification for 5 seconds
+                notification.style.display = 'none';
+            }, 5000);
+        }
+
+        //when the marker or the circle is clicked, it will find the text in the output and scroll to it
+        function findtextbyclickingpin(textbox, searchbar, rawpin) {
+            try {
+                const contentContainer = document.getElementById(textbox);
+                removeHighlights(contentContainer);
+                var pin = rawpin.match(/\d+/g);
+                console.log(localStorage['shapetype'], rawpin);
+
+                if (localStorage['checkmobileclock'] === true) {
+                    console.log('checkmobileclock');
+                    console.log(localStorage['shapetype']);
+                    if (localStorage['shapetype'] === 'pin') {
+                        pin = rawpin
+                    } else {
+                        pin = 'Circle ' + pin
+                    }
+                } else if (localStorage['status'] === 'postlocation') {
+                    console.log('postlocationarea');
+                    console.log(localStorage['shapetype']);
+                    if (localStorage['shapetype'] === 'pin') {
+                        pin = rawpin
+                    } else {
+                        pin = 'Circle ' + pin
+                    }
+                } else if ((localStorage['radiuslist'] && localStorage['coordradius']) || (localStorage['radiuslist'] && !localStorage['coordradius'])) {
+                    console.log('radiuslist');
+                    if (localStorage['shapetype'] === 'pin') {
+                        pin = rawpin
+                    } else {
+                        pin = 'Circle ' + pin
+                    }
+                } else if (localStorage['notspecial']) {
+                    if (localStorage['shapetype'] === 'pin') {
+                        pin = rawpin
+                    } else {
+                        pin = 'Circle ' + pin
+                    }
+                }
+                else {
+                    pin = rawpin
+                }
+                console.log(pin)
+                const regex = new RegExp(pin, 'gi');
+                const content = contentContainer.innerHTML;
+
+                // Replace the matched terms with highlighted span elements
+                const highlightedContent = content.replace(regex, match => `<span class="highlight">${match}</span>`);
+
+                // Update the container with highlighted content
+                contentContainer.innerHTML = highlightedContent;
+                console.log(highlightedContent);
+
+                const firstOccurrence = document.querySelector('.highlight');
+                if (firstOccurrence) {  //scroll to the highlighed word
+                    firstOccurrence.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    document.getElementById(searchbar).value = pin;
+                }
+                localStorage.setItem('pin', false);
+            }
+            catch (error) {
+                console.log(error);
+            }
+        }
+
+        window.addEventListener('storage', () => { //keeps an eye on the localStorage
+            console.log(localStorage['status']);
+            if (localStorage['status'] === 'postlocation') { // to know whether a marker was clicked in the map
+                var clickedpin = localStorage['clickedpin'];
+                console.log(clickedpin);
+
+                findtextbyclickingpin('text', 'searcharea', clickedpin); //finds the marker detail in the output container
+            }
+
+            if (localStorage['status'] === 'coordlocation' || localStorage['status'] === 'findpin') {
+                var clickedpin = localStorage['clickedpin'];
+                console.log(clickedpin);
+                findtextbyclickingpin('coordtext', 'searchbarcoords', clickedpin);
+            }
+
+            if (document.getElementById('text').innerHTML.trim() !== '') {
+                console.log['circlecoordinates']
+                function removeHighlights(container) {
+                    //replace all highlighted spans with their inner text
+                    container.innerHTML = container.innerHTML.replace(/<span class="highlight">(.*?)<\/span>/g, '$1');
+                }
+                if (localStorage['createdlayer']) { //to check if the layer of the map change
+                    console.log('here add')         //so like if new shapes or added or deleted
+                    fetch('/editoutput', {          //then it can notify app.py to change the details in the output
+                        method: 'POST',             //by doing regex using the content of the shape
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 'circlecoordinates': localStorage['circlecoordinates'], 'thisradius': localStorage['drawncircleradius'], 'htmlcontent': document.getElementById('text').innerHTML, 'add': true }), //Send to app.py to let it calculate
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data.content)
+                            document.getElementById('text').innerHTML = data.content;
+                            removeHighlights(document.getElementById('text'));
+                            localStorage.setItem('number', data.number);
+                            var mapFrame = document.getElementById('mapFrame');
+                            mapFrame.contentWindow.postMessage('bindpop', '*');
+                            localStorage.removeItem('circlecoordinates');
+                        })
+                    localStorage.removeItem('createdlayer');
+                    localStorage.removeItem('deleteditem');
+                }
+                if (localStorage['deleteditem']) {
+                    console.log('here del')
+                    fetch('/editoutput', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 'deleteditem': localStorage['deleteditem'], 'htmlcontent': document.getElementById('text').innerHTML, 'add': false }), //Send to app.py to let it calculate
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log(data.content)
+                            document.getElementById('text').innerHTML = data.content;
+                            removeHighlights(document.getElementById('text'));
+                        })
+                    localStorage.removeItem('createdlayer')
+                    localStorage.removeItem('deleteditem');
+                }
+            }
+        });
+
+
+    </script>
+</body>
+
+</html>
